@@ -7,6 +7,10 @@ import { useState, useCallback } from 'react'
 export function useNotebook(npcData) {
   const [unlockedSections, setUnlockedSections] = useState(new Set())
   const [recentlyUnlocked, setRecentlyUnlocked] = useState([])
+  // Tracks the id of the most recently unlocked section, kept even after
+  // the 3s "recently unlocked" flash clears — used to pick which milestone
+  // background image to show (see npcAssets.js).
+  const [currentSectionId, setCurrentSectionId] = useState(null)
 
   const unlockSections = useCallback((sectionIds) => {
     if (!sectionIds || sectionIds.length === 0) return
@@ -22,6 +26,7 @@ export function useNotebook(npcData) {
       })
       if (newlyAdded.length > 0) {
         setRecentlyUnlocked(newlyAdded)
+        setCurrentSectionId(newlyAdded[newlyAdded.length - 1])
         // Clear "recently unlocked" flash after 3 seconds
         setTimeout(() => setRecentlyUnlocked([]), 3000)
       }
@@ -39,6 +44,7 @@ export function useNotebook(npcData) {
   return {
     unlockedSections,
     recentlyUnlocked,
+    currentSectionId,
     unlockSections,
     completionPct,
     isComplete,

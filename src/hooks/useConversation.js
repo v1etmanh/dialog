@@ -1,6 +1,22 @@
 import { useState, useCallback } from 'react'
 import { getResponse } from '../utils/aiSimulator.js'
 
+/**
+ * Gọi backend RAG (embedding local + Gemini generation).
+ * Nếu backend không phản hồi được (chưa bật server, mất mạng...),
+ * ném lỗi để nơi gọi tự rơi về aiSimulator.js làm phương án dự phòng.
+ */
+async function fetchRagResponse(npcId, userText) {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ npcId, message: userText })
+  })
+  if (!res.ok) throw new Error(`RAG API lỗi: ${res.status}`)
+  const data = await res.json()
+  return { text: data.text, unlock: data.unlock || [] }
+}
+
 let msgId = 100
 
 /**
@@ -36,7 +52,13 @@ export function useConversation(npcData, unlockSections) {
     const delay = 700 + Math.random() * 700
     await new Promise(resolve => setTimeout(resolve, delay))
 
-    const response = getResponse(npcData, trimmed)
+    let response
+    try {
+      response = await fetchRagResponse(npcData.id, trimmed)
+    } catch (err) {
+      console.warn('[Chat] Backend RAG lỗi, dùng aiSimulator dự phòng:', err.message)
+      response = getResponse(npcData, trimmed)
+    }
 
     const npcMsg = {
       id: msgId++,

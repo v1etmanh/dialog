@@ -83,3 +83,274 @@ input, textarea {
   background: var(--wood-light);
   border-radius: 3px;
 }
+
+/* ══════════════════════════════════════════════════════
+   Interview scene — 2-column "visual novel" layout
+   ══════════════════════════════════════════════════════ */
+.interview-scene {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #3d1f0a, #1a0a00);
+  overflow: hidden;
+}
+
+.interview-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1.5px solid rgba(212, 160, 84, 0.3);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.interview-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.interview-left {
+  width: 100%;
+  min-width: 460px;
+  max-width: 1200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.32));
+  border-right: 1.5px solid rgba(212, 160, 84, 0.25);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.interview-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-width: 340px;
+  padding: 20px;
+}
+
+/* Hộp thoại chat — chỉ chiếm 1 phần nhỏ vùng bên phải, không full-bleed */
+.interview-dialog-box {
+  width: 20%;
+  height: 70%;
+  min-width: 340px;
+  max-width: 560px;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1.5px solid rgba(212, 160, 84, 0.3);
+  box-shadow: 0 12px 44px rgba(0, 0, 0, 0.45);
+}
+
+.interview-portrait-wrap {
+  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 16 / 4.5;
+  padding: 12px 12px 0;
+}
+
+.interview-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px 14px;
+  flex-shrink: 0;
+}
+
+.interview-chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: linear-gradient(to bottom, rgba(253, 243, 227, 0.06), rgba(253, 243, 227, 0.1));
+}
+
+@media (max-width: 1300px) {
+  .interview-main {
+    flex-direction: column;
+  }
+  .interview-left {
+    width: 100%;
+    max-height: 46vh;
+    border-right: none;
+    border-bottom: 1.5px solid rgba(212, 160, 84, 0.25);
+  }
+  .interview-portrait-wrap {
+    padding: 10px 10px 0;
+  }
+
+  .interview-right {
+    padding: 12px;
+  }
+
+  .interview-dialog-box {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 320px;
+  }
+}
+
+@keyframes notebookPulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* ── Notebook sidebar ─────────────────────────────────── */
+.notebook-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-top: 1.5px solid rgba(212, 160, 84, 0.2);
+}
+
+.notebook-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 4px;
+  color: #f0d090;
+  flex-shrink: 0;
+}
+
+.notebook-panel-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.notebook-panel-pct {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.notebook-panel-progress {
+  height: 5px;
+  margin: 0 14px 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.notebook-panel-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+/* ── Trang sổ vẽ bằng canvas (diary.png + nội dung đè lên) ─ */
+.diary-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 2px 10px;
+}
+
+.diary-canvas-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.diary-canvas {
+  display: block;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.35));
+}
+
+.diary-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1.5px solid rgba(212, 160, 84, 0.5);
+  color: #f0d090;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.diary-nav:hover {
+  background: rgba(212, 160, 84, 0.5);
+  color: #3d1f0a;
+}
+
+.diary-nav-prev { left: 2px; }
+.diary-nav-next { right: 2px; }
+
+.diary-dots {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  padding: 6px 10px 10px;
+}
+
+.diary-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(139, 94, 60, 0.3);
+  color: #f0d090;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diary-dot.unlocked {
+  background: linear-gradient(135deg, #fff8ee, #fdf0d8);
+  border-color: var(--gold);
+}
+
+.diary-dot.locked {
+  opacity: 0.5;
+}
+
+.diary-dot.active {
+  box-shadow: 0 0 0 2px var(--gold-light);
+  transform: scale(1.12);
+}
+
+.diary-dot.is-new {
+  animation: notebookPop 0.5s ease;
+  box-shadow: 0 0 0 3px rgba(212, 160, 84, 0.6);
+}
+
+@keyframes notebookPop {
+  0%   { transform: scale(0.96); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}

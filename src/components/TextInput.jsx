@@ -1,8 +1,14 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
-export default function TextInput({ onSend, disabled }) {
+export default function TextInput({ onSend, disabled, prefill }) {
   const [value, setValue] = useState('')
   const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (prefill === undefined) return
+    setValue(prefill || '')
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }, [prefill])
 
   const handleSend = () => {
     const trimmed = value.trim()

@@ -6,6 +6,78 @@ import Notebook from '../components/Notebook.jsx'
 import { useNotebook } from '../hooks/useNotebook.js'
 import { useConversation } from '../hooks/useConversation.js'
 
+function NotebookBadge({ unlockedCount, totalSections, recentlyUnlocked, npcData, onChooseQuestion }) {
+  const suggestions = (npcData?.notebook?.sections || []).map(s => {
+    const lbl = s.label || ''
+    if (/nguồn/i.test(lbl)) return { id: s.id, q: 'Đàn bầu có nguồn gốc từ đâu?' }
+    if (/cấu/i.test(lbl)) return { id: s.id, q: 'Đàn bầu gồm những bộ phận nào?' }
+    if (/kỹ|kĩ/i.test(lbl)) return { id: s.id, q: 'Làm sao để chơi đàn bầu?' }
+    if (/âm|tiếng/i.test(lbl)) return { id: s.id, q: 'Tiếng đàn bầu nghe như thế nào?' }
+    if (/kỷ|ký|kỉ/i.test(lbl)) return { id: s.id, q: 'Ông/bà có kỷ niệm nào liên quan đến đàn bầu không?' }
+    return { id: s.id, q: `Bạn có thể nói về ${lbl.toLowerCase()}?` }
+  })
+
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        title="Gợi ý câu hỏi"
+        style={{
+          background: recentlyUnlocked.length > 0
+            ? 'linear-gradient(135deg, #d4a054, #f0c060)'
+            : 'rgba(253,243,227,0.1)',
+          border: '1.5px solid rgba(212,160,84,0.5)',
+          color: recentlyUnlocked.length > 0 ? '#3d1f0a' : '#f0d090',
+          borderRadius: 8,
+          padding: '7px 12px',
+          fontSize: '0.83rem',
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          whiteSpace: 'nowrap',
+          cursor: 'pointer',
+        }}
+      >
+        📔 {unlockedCount}/{totalSections}
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          marginTop: 8,
+          width: 320,
+          background: 'rgba(12,6,2,0.92)',
+          color: '#f6e8cf',
+          border: '1px solid rgba(255,240,200,0.06)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+          borderRadius: 10,
+          padding: 10,
+          zIndex: 30,
+        }}>
+          <div style={{ fontWeight: 800, marginBottom: 8 }}>Gợi ý câu hỏi</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {suggestions.map(s => (
+              <button key={s.id} onClick={() => { onChooseQuestion?.(s.q); setOpen(false) }} style={{
+                textAlign: 'left',
+                padding: '8px 10px',
+                borderRadius: 8,
+                background: 'rgba(255,255,255,0.02)',
+                color: 'inherit',
+                border: 'none',
+                cursor: 'pointer',
+              }}>{s.q}</button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function InterviewScene({ npcData, onBack, onComplete }) {
   const {
     unlockedSections,
@@ -21,6 +93,15 @@ export default function InterviewScene({ npcData, onBack, onComplete }) {
   const { messages, sendMessage, isTyping } = useConversation(npcData, (ids) => {
     unlockSections(ids)
   })
+
+  const [prefill, setPrefill] = useState(undefined)
+
+  const handleChooseQuestion = (q) => {
+    setPrefill(q)
+    setTimeout(() => setPrefill(undefined), 2000)
+    // also auto-send after a short delay if desired — leave commented
+    // setTimeout(() => sendMessage(q), 600)
+  }
 
   // Trigger completion callback once
   const [completionFired, setCompletionFired] = useState(false)
@@ -63,24 +144,13 @@ export default function InterviewScene({ npcData, onBack, onComplete }) {
           </div>
         </div>
 
-        <div style={{
-          background: recentlyUnlocked.length > 0
-            ? 'linear-gradient(135deg, #d4a054, #f0c060)'
-            : 'rgba(253,243,227,0.1)',
-          border: '1.5px solid rgba(212,160,84,0.5)',
-          color: recentlyUnlocked.length > 0 ? '#3d1f0a' : '#f0d090',
-          borderRadius: 8,
-          padding: '7px 12px',
-          fontSize: '0.83rem',
-          fontWeight: 700,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          whiteSpace: 'nowrap',
-          animation: recentlyUnlocked.length > 0 ? 'notebookPulse 0.6s ease' : 'none',
-        }}>
-          📔 {unlockedCount}/{totalSections}
-        </div>
+        <NotebookBadge
+          unlockedCount={unlockedCount}
+          totalSections={totalSections}
+          recentlyUnlocked={recentlyUnlocked}
+          npcData={npcData}
+          onChooseQuestion={handleChooseQuestion}
+        />
       </div>
 
       {/* ── Main content: 2 cột ───────────────────────── */}
@@ -145,7 +215,7 @@ export default function InterviewScene({ npcData, onBack, onComplete }) {
             </div>
 
             <div className="interview-input-wrap">
-              <TextInput onSend={sendMessage} disabled={isTyping} />
+              <TextInput onSend={sendMessage} disabled={isTyping} prefill={prefill} />
             </div>
           </div>
         </div>

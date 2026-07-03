@@ -3,6 +3,7 @@ import { toPng } from 'html-to-image'
 import EditableRichText from '../components/newspaper/EditableRichText.jsx'
 import ImageSlot from '../components/newspaper/ImageSlot.jsx'
 import { buildDefaultDraft, loadDraft, saveDraft } from '../data/newspaperDefaults.js'
+import { NEWSPAPER_LAYOUTS } from '../data/newspaperLayouts.js'
 import { getAllBackgrounds } from '../data/npcAssets.js'
 
 function escapeHtml(str) {
@@ -12,8 +13,12 @@ function escapeHtml(str) {
 }
 
 /**
- * Màn "Biên Tập Báo" — trang nhất báo giấy kiểu thật, 1 bố cục cố định
- * (masthead + headline + ảnh hero + 2 cột chữ + hộp trích dẫn + 3 ảnh nhỏ).
+ * Màn "Biên Tập Báo" — trang báo giấy kiểu thật, CÓ NHIỀU BỐ CỤC để chọn
+ * (xem `newspaperLayouts.js`). Cả 4 bố cục dùng chung 1 bộ dữ liệu (5 ảnh +
+ * 3 khung chữ + masthead/headline/byline) — chỉ khác cách SẮP XẾP các
+ * vùng đó trên trang, làm bằng CSS Grid `grid-template-areas` (class
+ * `.layout-<id>` trong index.css). Nhờ vậy đổi qua lại bố cục không làm
+ * mất nội dung đã nhập.
  * Nội dung chữ được chọn từ "ngân hàng đoạn trích" (dữ liệu notebook +
  * lịch sử chat thật của cuộc phỏng vấn) thay vì gõ tay. Ảnh lấy từ 5 ảnh
  * milestone có sẵn của NPC, hoặc dán URL ảnh ngoài. Xuất file PNG bằng
@@ -57,6 +62,7 @@ export default function NewspaperScene({ npcData, messages, onBack }) {
   }, [npcData, messages])
 
   const updateField = (key, value) => setDraft(d => ({ ...d, [key]: value }))
+  const setLayout = (id) => updateField('layout', id)
 
   const registerTextRef = useCallback((id, node) => { textRefs.current[id] = node }, [])
   const handleFocusBlock = useCallback((id) => { activeBlockId.current = id }, [])
@@ -151,6 +157,24 @@ export default function NewspaperScene({ npcData, messages, onBack }) {
       <div className="np-workspace">
         <aside className="np-sidebar">
           <section className="np-panel">
+            <h4>📐 Bố Cục</h4>
+            <p className="np-hint">Đổi bố cục không làm mất nội dung đã chọn/nhập.</p>
+            <div className="np-layout-list">
+              {NEWSPAPER_LAYOUTS.map((l) => (
+                <button
+                  key={l.id}
+                  className={`np-layout-item ${draft.layout === l.id ? 'active' : ''}`}
+                  onClick={() => setLayout(l.id)}
+                  title={l.desc}
+                >
+                  <span className="np-layout-icon">{l.icon}</span>
+                  <span className="np-layout-name">{l.name}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="np-panel">
             <h4>🖼️ Khay Ảnh</h4>
             <p className="np-hint">Bấm chọn 1 ảnh, rồi bấm vào ô ảnh trên trang báo để đặt vào đó.</p>
             <div className="np-tray-grid">
@@ -192,37 +216,34 @@ export default function NewspaperScene({ npcData, messages, onBack }) {
         </aside>
 
         <div className="np-paper-wrap">
-          <div className="np-paper" ref={paperRef}>
-            <div className="np-masthead">
-              <input
-                className="np-masthead-input"
-                value={draft.masthead}
-                onChange={(e) => updateField('masthead', e.target.value)}
-              />
-              <div className="np-masthead-sub">
-                <input value={draft.date} onChange={(e) => updateField('date', e.target.value)} />
-                <span>·</span>
-                <input value={draft.issueLabel} onChange={(e) => updateField('issueLabel', e.target.value)} />
+          <div className={`np-paper layout-${draft.layout}`} ref={paperRef}>
+            <div className="np-paper-grid">
+              <div className="np-area-masthead">
+                <input
+                  className="np-masthead-input"
+                  value={draft.masthead}
+                  onChange={(e) => updateField('masthead', e.target.value)}
+                />
+                <div className="np-masthead-sub">
+                  <input value={draft.date} onChange={(e) => updateField('date', e.target.value)} />
+                  <span>·</span>
+                  <input value={draft.issueLabel} onChange={(e) => updateField('issueLabel', e.target.value)} />
+                </div>
               </div>
-            </div>
-            <div className="np-rule-double" />
 
-            <input
-              className="np-headline"
-              value={draft.headline}
-              placeholder="Tiêu đề chính..."
-              onChange={(e) => updateField('headline', e.target.value)}
-            />
-            <input
-              className="np-byline"
-              value={draft.byline}
-              onChange={(e) => updateField('byline', e.target.value)}
-            />
+              <input
+                className="np-headline np-area-headline"
+                value={draft.headline}
+                placeholder="Tiêu đề chính..."
+                onChange={(e) => updateField('headline', e.target.value)}
+              />
+              <input
+                className="np-byline np-area-byline"
+                value={draft.byline}
+                onChange={(e) => updateField('byline', e.target.value)}
+              />
 
-            <div className="np-rule" />
-
-            <div className="np-main-grid">
-              <div className="np-main-left">
+              <div className="np-area-hero">
                 <ImageSlot
                   ratio="16/9"
                   label="Ảnh chính"
@@ -232,41 +253,41 @@ export default function NewspaperScene({ npcData, messages, onBack }) {
                   onClick={() => handleSlotClick('hero')}
                   onCaptionChange={(v) => setCaption('hero', v)}
                 />
-                <div className="np-columns">
-                  <EditableRichText
-                    id="col1"
-                    defaultHtml={draft.texts.col1}
-                    placeholder="Chọn 1 đoạn trích bên sườn để chèn vào đây..."
-                    className="np-body-col"
-                    registerRef={registerTextRef}
-                    onFocusBlock={handleFocusBlock}
-                    onBlurSync={handleBlurSync}
-                  />
-                  <EditableRichText
-                    id="col2"
-                    defaultHtml={draft.texts.col2}
-                    placeholder="Chọn 1 đoạn trích bên sườn để chèn vào đây..."
-                    className="np-body-col"
-                    registerRef={registerTextRef}
-                    onFocusBlock={handleFocusBlock}
-                    onBlurSync={handleBlurSync}
-                  />
-                </div>
               </div>
 
-              <div className="np-main-right">
-                <div className="np-quotebox">
-                  <span className="np-quote-mark">“</span>
-                  <EditableRichText
-                    id="quote"
-                    defaultHtml={draft.texts.quote}
-                    placeholder="Trích 1 câu nói đáng nhớ..."
-                    className="np-quote-text"
-                    registerRef={registerTextRef}
-                    onFocusBlock={handleFocusBlock}
-                    onBlurSync={handleBlurSync}
-                  />
-                </div>
+              <EditableRichText
+                id="col1"
+                defaultHtml={draft.texts.col1}
+                placeholder="Chọn 1 đoạn trích bên sườn để chèn vào đây..."
+                className="np-body-col np-area-col1"
+                registerRef={registerTextRef}
+                onFocusBlock={handleFocusBlock}
+                onBlurSync={handleBlurSync}
+              />
+              <EditableRichText
+                id="col2"
+                defaultHtml={draft.texts.col2}
+                placeholder="Chọn 1 đoạn trích bên sườn để chèn vào đây..."
+                className="np-body-col np-area-col2"
+                registerRef={registerTextRef}
+                onFocusBlock={handleFocusBlock}
+                onBlurSync={handleBlurSync}
+              />
+
+              <div className="np-quotebox np-area-quotebox">
+                <span className="np-quote-mark">“</span>
+                <EditableRichText
+                  id="quote"
+                  defaultHtml={draft.texts.quote}
+                  placeholder="Trích 1 câu nói đáng nhớ..."
+                  className="np-quote-text"
+                  registerRef={registerTextRef}
+                  onFocusBlock={handleFocusBlock}
+                  onBlurSync={handleBlurSync}
+                />
+              </div>
+
+              <div className="np-area-quoteimg">
                 <ImageSlot
                   ratio="1/1"
                   label="Ảnh minh hoạ"
@@ -277,40 +298,39 @@ export default function NewspaperScene({ npcData, messages, onBack }) {
                   onCaptionChange={(v) => setCaption('quote', v)}
                 />
               </div>
-            </div>
 
-            <div className="np-rule" />
-            <div className="np-thumbrow">
-              <ImageSlot
-                ratio="4/3"
-                label="Ảnh 3"
-                src={draft.images.thumb1.src}
-                caption={draft.images.thumb1.caption}
-                hasPendingPick={!!pendingPick}
-                onClick={() => handleSlotClick('thumb1')}
-                onCaptionChange={(v) => setCaption('thumb1', v)}
-              />
-              <ImageSlot
-                ratio="4/3"
-                label="Ảnh 4"
-                src={draft.images.thumb2.src}
-                caption={draft.images.thumb2.caption}
-                hasPendingPick={!!pendingPick}
-                onClick={() => handleSlotClick('thumb2')}
-                onCaptionChange={(v) => setCaption('thumb2', v)}
-              />
-              <ImageSlot
-                ratio="4/3"
-                label="Ảnh 5"
-                src={draft.images.thumb3.src}
-                caption={draft.images.thumb3.caption}
-                hasPendingPick={!!pendingPick}
-                onClick={() => handleSlotClick('thumb3')}
-                onCaptionChange={(v) => setCaption('thumb3', v)}
-              />
-            </div>
+              <div className="np-thumbrow np-area-thumbs">
+                <ImageSlot
+                  ratio="4/3"
+                  label="Ảnh 3"
+                  src={draft.images.thumb1.src}
+                  caption={draft.images.thumb1.caption}
+                  hasPendingPick={!!pendingPick}
+                  onClick={() => handleSlotClick('thumb1')}
+                  onCaptionChange={(v) => setCaption('thumb1', v)}
+                />
+                <ImageSlot
+                  ratio="4/3"
+                  label="Ảnh 4"
+                  src={draft.images.thumb2.src}
+                  caption={draft.images.thumb2.caption}
+                  hasPendingPick={!!pendingPick}
+                  onClick={() => handleSlotClick('thumb2')}
+                  onCaptionChange={(v) => setCaption('thumb2', v)}
+                />
+                <ImageSlot
+                  ratio="4/3"
+                  label="Ảnh 5"
+                  src={draft.images.thumb3.src}
+                  caption={draft.images.thumb3.caption}
+                  hasPendingPick={!!pendingPick}
+                  onClick={() => handleSlotClick('thumb3')}
+                  onCaptionChange={(v) => setCaption('thumb3', v)}
+                />
+              </div>
 
-            <div className="np-footer">Trích từ cuộc phỏng vấn — Dự Án Ghi Chép Làng Xưa</div>
+              <div className="np-footer np-area-footer">Trích từ cuộc phỏng vấn — Dự Án Ghi Chép Làng Xưa</div>
+            </div>
           </div>
         </div>
       </div>

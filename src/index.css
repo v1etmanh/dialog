@@ -612,10 +612,144 @@ input, textarea {
 }
 .rt-toolbar-swatch { border: 1px solid rgba(0,0,0,0.3) !important; }
 
+/* ── Bố cục trang báo (Layout templates) ─────────────────────────── */
+
+/* Layout 1: Classic - Trang Nhất Cổ Điển
+   Ảnh chính bên trái lớn, 2 cột chữ ở giữa, hộp trích dẫn bên phải
+*/
+.layout-classic .np-paper-grid {
+  display: grid;
+  grid-template-columns: 50% 1fr 1fr;
+  grid-template-rows: auto auto auto auto 1fr auto;
+  gap: 16px;
+  grid-template-areas:
+    "masthead masthead masthead"
+    "headline headline headline"
+    "byline byline byline"
+    "hero col1 quotebox"
+    "hero col2 quoteimg"
+    "footer footer footer";
+}
+
+/* Layout 2: Magazine - Tạp Chí
+   Ảnh chính full-width nổi bật ở trên, 2 cột chữ ở dưới, hộp trích + thumbs
+*/
+.layout-magazine .np-paper-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto auto auto auto auto;
+  gap: 12px;
+  grid-template-areas:
+    "masthead masthead"
+    "headline headline"
+    "byline byline"
+    "hero hero"
+    "col1 col2"
+    "quotebox thumbs"
+    "footer footer";
+}
+
+/* Layout 3: Grid - Lưới Ảnh Nổi Bật
+   Ưu tiên hình ảnh: ảnh chính lớn + minh hoạ, 2 cột chữ, dải 3 ảnh phụ
+*/
+.layout-grid .np-paper-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: auto auto auto auto auto auto auto;
+  gap: 14px;
+  grid-template-areas:
+    "masthead masthead"
+    "headline headline"
+    "byline byline"
+    "hero quoteimg"
+    "col1 col2"
+    "quotebox quotebox"
+    "thumbs thumbs"
+    "footer footer";
+}
+
+/* Layout 4: Strip - Dải Dọc Photobooth
+   Mỗi thứ xếp dọc thành 1 dải hẹp — cảm giác như dải ảnh photobooth
+*/
+.layout-strip .np-paper-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+  gap: 10px;
+  grid-template-areas:
+    "masthead"
+    "headline"
+    "byline"
+    "hero"
+    "col1"
+    "col2"
+    "quotebox"
+    "quoteimg"
+    "thumbs"
+    "footer";
+}
+
+/* Gán areas cho từng element */
+.np-area-masthead { grid-area: masthead; }
+.np-area-headline { grid-area: headline; }
+.np-area-byline { grid-area: byline; }
+.np-area-hero { grid-area: hero; }
+.np-area-col1 { grid-area: col1; }
+.np-area-col2 { grid-area: col2; }
+.np-area-quotebox { grid-area: quotebox; }
+.np-area-quoteimg { grid-area: quoteimg; }
+.np-area-thumbs { grid-area: thumbs; }
+.np-area-footer { grid-area: footer; }
+
 @media (max-width: 900px) {
   .np-workspace { flex-direction: column; }
   .np-sidebar { width: 100%; flex-direction: row; overflow-x: auto; }
   .np-main-grid { grid-template-columns: 1fr; }
   .np-columns { grid-template-columns: 1fr; }
   .np-thumbrow { grid-template-columns: 1fr 1fr; }
+  
+  /* Responsive layouts */
+  .layout-classic .np-paper-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "masthead"
+      "headline"
+      "byline"
+      "hero"
+      "col1"
+      "col2"
+      "quotebox"
+      "quoteimg"
+      "thumbs"
+      "footer";
+  }
+  
+  .layout-magazine .np-paper-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "masthead"
+      "headline"
+      "byline"
+      "hero"
+      "col1"
+      "col2"
+      "quotebox"
+      "thumbs"
+      "footer";
+  }
+  
+  .layout-grid .np-paper-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "masthead"
+      "headline"
+      "byline"
+      "hero"
+      "quoteimg"
+      "col1"
+      "col2"
+      "quotebox"
+      "thumbs"
+      "footer";
+  }
 }

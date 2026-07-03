@@ -20,6 +20,7 @@ export function buildDefaultDraft(npcData) {
   const sec = (i) => sections[i]
 
   return {
+    layout: 'classic',
     masthead: 'BÁO LÀNG NGÀY XƯA',
     issueLabel: `Số Đặc Biệt · Chuyên Đề: ${npcData.topic}`,
     date: todayVi(),
@@ -43,7 +44,11 @@ export function buildDefaultDraft(npcData) {
 export function loadDraft(npcId) {
   try {
     const raw = localStorage.getItem(`newspaper_${npcId}`)
-    return raw ? JSON.parse(raw) : null
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    // Bản nháp lưu trước khi có tính năng nhiều layout sẽ thiếu `layout`
+    // — mặc định về 'classic' để không vỡ CSS grid khi load lại.
+    return { layout: 'classic', ...parsed }
   } catch {
     return null
   }

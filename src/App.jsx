@@ -3,8 +3,9 @@ import VillageScene from './scenes/VillageScene.jsx'
 import InterviewScene from './scenes/InterviewScene.jsx'
 import ongBaData from './data/npc_oanquan.json'
 import baNamData from './data/npc_danbau.json'
+import hungData from './data/npc_hung.json'
 
-const ALL_NPCS = [ongBaData, baNamData]
+const ALL_NPCS = [ongBaData, hungData, baNamData]
 
 /* ─── Completion screen ──────────────────────────────────── */
 function CompletionScreen({ npcData, onReturn }) {

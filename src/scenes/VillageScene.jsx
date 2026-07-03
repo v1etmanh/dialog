@@ -199,15 +199,31 @@ function roundRect(ctx, x, y, w, h, r) {
 
 /* ─── NPC Card ────────────────────────────────────────────── */
 
-function NPCCard({ npc, onClick, side }) {
-  const isLeft = side === 'left'
+// Đặc điểm hiển thị riêng theo từng NPC (thay vì suy ra 2 vị trí trái/phải
+// như trước). Khoá theo npc.id để mở rộng thêm nhân vật dễ dàng.
+const NPC_DISPLAY = {
+  ong_ba: { icon: '👴', gradient: 'linear-gradient(135deg, #1a237e, #3949ab)' },
+  ba_nam: { icon: '👵', gradient: 'linear-gradient(135deg, #8b0000, #c62828)' },
+  hung:   { icon: '👨', gradient: 'linear-gradient(135deg, #2e7d32, #66bb6a)' },
+}
+
+// position: 'left' | 'center' | 'right' — tách phần định vị (wrapper) khỏi
+// phần hiệu ứng hover (button) để center dùng transform: translateX(-50%)
+// mà không bị hover transform ghi đè lên.
+function NPCCard({ npc, onClick, position }) {
+  const display = NPC_DISPLAY[npc.id] || { icon: '🧑', gradient: 'linear-gradient(135deg, #555, #888)' }
+
+  const posStyle = position === 'left'
+    ? { left: '5%' }
+    : position === 'right'
+    ? { right: '5%' }
+    : { left: '50%', transform: 'translateX(-50%)' }
+
   return (
+    <div style={{ position: 'absolute', bottom: '18%', ...posStyle }}>
     <button
       onClick={onClick}
       style={{
-        position: 'absolute',
-        bottom: '18%',
-        [isLeft ? 'left' : 'right']: '5%',
         width: 'clamp(130px, 18%, 200px)',
         background: 'rgba(253,243,227,0.92)',
         border: '3px solid var(--gold)',
@@ -238,9 +254,7 @@ function NPCCard({ npc, onClick, side }) {
         width: 64,
         height: 64,
         borderRadius: '50%',
-        background: isLeft
-          ? 'linear-gradient(135deg, #1a237e, #3949ab)'
-          : 'linear-gradient(135deg, #8b0000, #c62828)',
+        background: display.gradient,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -249,7 +263,7 @@ function NPCCard({ npc, onClick, side }) {
         border: '3px solid var(--gold)',
         flexShrink: 0,
       }}>
-        {isLeft ? '👴' : '👵'}
+        {display.icon}
       </div>
 
       <div style={{ textAlign: 'center' }}>
@@ -286,6 +300,7 @@ function NPCCard({ npc, onClick, side }) {
         Phỏng vấn →
       </div>
     </button>
+    </div>
   )
 }
 
@@ -318,14 +333,20 @@ export default function VillageScene({ npcs, onSelectNPC }) {
         style={{ width: '100%', height: '100%', display: 'block' }}
       />
 
-      {npcs.map((npc, i) => (
-        <NPCCard
-          key={npc.id}
-          npc={npc}
-          side={i === 0 ? 'left' : 'right'}
-          onClick={() => onSelectNPC(npc)}
-        />
-      ))}
+      {npcs.map((npc, i) => {
+        // 2 NPC -> trái/phải như cũ. 3 NPC -> trái/giữa/phải.
+        const position = npcs.length >= 3
+          ? (i === 0 ? 'left' : i === npcs.length - 1 ? 'right' : 'center')
+          : (i === 0 ? 'left' : 'right')
+        return (
+          <NPCCard
+            key={npc.id}
+            npc={npc}
+            position={position}
+            onClick={() => onSelectNPC(npc)}
+          />
+        )
+      })}
     </div>
   )
 }

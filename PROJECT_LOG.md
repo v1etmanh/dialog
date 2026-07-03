@@ -131,3 +131,94 @@
   2. Tốc độ viết tay (2 ký tự/16ms) đang cố định cho mọi section bất kể độ
      dài — có thể cân nhắc scale theo `section.content.length` nếu muốn
      tổng thời gian viết luôn đồng đều giữa các mốc.
+
+
+## [2026-07-03] - Thêm nhân vật thứ 3: Anh Hùng (Điêu Khắc Gốc Tre)
+- **Hành động**:
+  1. Đọc toàn bộ `PROJECT_LOG.md`, `App.jsx`, `VillageScene.jsx`,
+     `npcAssets.js`, `useNotebook.js`, `useConversation.js`, cả 2
+     `npc_*.json` hiện có, và toàn bộ `server/src/*.js` để nắm đúng schema
+     dữ liệu NPC + cơ chế backend RAG tự nạp `npc_*.json` trước khi thêm
+     nhân vật mới.
+  2. Research nghề điêu khắc gốc tre (thực tế ngoài đời: chọn gốc theo loại
+     đất, ngâm bùn + phơi nắng chống mối mọt, đặc thù "không sửa được sai"
+     khi đục) để dữ liệu hội thoại có căn cứ thật, không bịa khống.
+  3. Theo yêu cầu người dùng, gắn thêm lớp cốt truyện cá nhân: Hùng là bạn
+     thân thuở nhỏ của Long — chồng của nhân vật người chơi (nhà báo đi
+     phỏng vấn) — hiện Long đang dần mất trí nhớ. Việc phỏng vấn Hùng vừa
+     để ghi chép nghề thủ công, vừa mang ý nghĩa lưu giữ ký ức hộ Long.
+  4. Tạo `src/data/npc_hung.json`: 5 mốc kiến thức (`origin`, `selection`,
+     `treatment`, `carving`, `memories`) cùng `fallback`, theo đúng schema
+     2 file NPC cũ. Mốc `memories` được viết lại trực tiếp gắn với Long
+     thay vì chỉ kể kỷ niệm nghề chung chung.
+  5. Sửa `App.jsx`: import `npc_hung.json`, thêm vào `ALL_NPCS` (thứ tự
+     `[ongBaData, hungData, baNamData]` để Hùng hiển thị ở giữa làng).
+  6. Sửa `src/data/npcAssets.js`: thêm `CHARACTER_IMAGES.hung` (`/hung.png`)
+     và `SECTION_BACKGROUNDS.hung` (map `origin→hung_1` ... `memories→
+     hung_5`, theo đúng thứ tự mốc trong JSON — CHƯA xác nhận bằng ảnh
+     thật vì người dùng sẽ tự thêm ảnh vào `public/` sau).
+  7. Sửa `src/scenes/VillageScene.jsx`: trước đây `NPCCard` chỉ hỗ trợ 2
+     vị trí trái/phải suy từ index, và avatar emoji + màu gradient bị
+     hard-code theo `isLeft`. Đã refactor:
+     - Thêm bảng `NPC_DISPLAY` (icon + gradient) khoá theo `npc.id` thay vì
+       suy theo vị trí, để mở rộng thêm nhân vật không phải sửa logic.
+     - Tách phần định vị (`position: 'left' | 'center' | 'right'`, dùng
+       wrapper `<div>`) khỏi phần hiệu ứng hover (transform scale/translateY
+       trên `<button>`) — tránh xung đột transform khi card ở giữa cần
+       `translateX(-50%)` để canh giữa.
+     - `VillageScene` giờ tự chọn `position` theo `npcs.length`: 2 NPC vẫn
+       trái/phải như cũ (không đổi hành vi), 3 NPC trở lên thì
+       trái/giữa/phải.
+  8. **Không sửa gì ở `server/`** — `data.js` tự đọc mọi file khớp
+     `npc_*.json` trong `src/data`, tự embed khi restart server nên
+     `npc_hung.json` sẽ tự được nạp vào RAG mà không cần đổi code backend.
+- **Tác động**: Làng giờ có 3 NPC hiển thị trái/giữa/phải. Notebook, tiến
+  độ, gợi ý câu hỏi (`NotebookBadge` trong `InterviewScene.jsx`) đều đọc
+  dữ liệu generic từ `npcData` nên hoạt động ngay với Hùng, không cần sửa.
+  Cần chạy `npm run dev` (frontend) và restart `server` (để re-embed thêm
+  5 đoạn tri thức mới) để kiểm tra thực tế.
+- **Ghi chú cho tương lai**:
+  1. Người dùng sẽ tự tạo và thêm ảnh vào `public/`: `hung.png` (nhân vật,
+     nền trong suốt) + `hung_1.png` … `hung_5.png` (nền theo mốc, thứ tự
+     đúng theo mảng `sections` trong `npc_hung.json`: origin, selection,
+     treatment, carving, memories). Nếu ảnh gen ra không khớp nội dung
+     mốc tương ứng, chỉ cần đổi số trong `SECTION_BACKGROUNDS.hung` ở
+     `npcAssets.js`, không cần đổi tên file ảnh.
+  2. `drawVillage()` trong `VillageScene.jsx` vẫn chỉ vẽ 2 ngôi nhà nền
+     (trái/phải) bằng canvas — chưa vẽ thêm nhà/xưởng cho vị trí giữa.
+     Card của Hùng vẫn hiển thị đúng vị trí giữa nhưng nền phía sau chưa
+     có công trình riêng cho anh; có thể cân nhắc thêm 1 `drawHouse` nhỏ
+     ở giữa nếu muốn đồng bộ hình ảnh.
+  3. Tên "Long" (chồng của người chơi) hiện hard-code trong lời thoại của
+     Hùng — nếu sau này dự án có màn hình đặt tên nhân vật người chơi/
+     chồng, cần thay chuỗi cứng này bằng biến động.
+
+
+## [2026-07-03] - Fix lỗi gợi ý câu hỏi luôn ra nội dung "đàn bầu" cho mọi NPC
+- **Bug được người dùng báo**: mở gợi ý câu hỏi (📔 badge góc trên) khi đang
+  phỏng vấn Ông Ba hoặc Anh Hùng vẫn thấy vài câu hỏi về "đàn bầu" — sai
+  hoàn toàn chủ đề.
+- **Nguyên nhân**: `NotebookBadge` trong `InterviewScene.jsx` không đọc dữ
+  liệu thật của từng NPC để tạo gợi ý. Nó dò regex trên `section.label`
+  (`/nguồn/`, `/cấu/`, `/kỹ|kĩ/`, `/âm|tiếng/`, `/kỷ|ký|kỉ/`) rồi trả về
+  các câu hỏi HARD-CODE sẵn nội dung về đàn bầu — code này rõ ràng chỉ
+  được viết cho riêng Bà Năm rồi quên tổng quát hoá. Hậu quả: bất kỳ label
+  nào của NPC khác chỉ cần trùng ký tự là bị gán nhầm câu hỏi đàn bầu, ví
+  dụ label "Nguồn Gốc" (mọi NPC đều có) luôn khớp `/nguồn/`; "Kỹ Thuật
+  Điêu Khắc" của Hùng chứa "Kỹ" nên khớp `/kỹ/` và bị gán nhầm câu
+  "Làm sao để chơi đàn bầu?"; "Ký Ức Cùng Long" chứa "Ký" nên khớp
+  `/kỷ|ký|kỉ/` và bị gán nhầm câu hỏi kỷ niệm đàn bầu.
+- **Fix**: thêm hẳn trường `sampleQuestion` vào từng mục trong
+  `responses` của cả 3 file `npc_*.json` (danbau, oanquan, hung) — câu hỏi
+  mẫu do người viết nội dung soạn sẵn, đúng giọng văn/xưng hô riêng từng
+  nhân vật, khớp đúng chủ đề `id` của mục đó. Sửa `NotebookBadge` trong
+  `InterviewScene.jsx`: bỏ toàn bộ logic đoán bằng regex, đọc thẳng
+  `npcData.responses[s.id].sampleQuestion`; chỉ fallback về câu hỏi
+  generic (`Bạn có thể kể về ${label}?`) nếu mục nào lỡ thiếu trường này.
+- **Tác động**: Gợi ý câu hỏi giờ luôn đúng nhân vật/chủ đề đang phỏng vấn.
+  Không còn phụ thuộc vào chữ trong `label` nữa nên an toàn khi thêm NPC
+  mới sau này — miễn có `sampleQuestion` là tự đúng, không cần sửa
+  `InterviewScene.jsx`.
+- **Ghi chú cho tương lai**: Khi tạo `npc_*.json` mới, PHẢI điền
+  `sampleQuestion` cho từng mục trong `responses` (không chỉ `keywords` +
+  `text` như trước) — coi đây là trường bắt buộc trong schema NPC từ giờ.

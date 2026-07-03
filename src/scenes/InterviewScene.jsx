@@ -7,14 +7,18 @@ import { useNotebook } from '../hooks/useNotebook.js'
 import { useConversation } from '../hooks/useConversation.js'
 
 function NotebookBadge({ unlockedCount, totalSections, recentlyUnlocked, npcData, onChooseQuestion }) {
+  // Câu hỏi gợi ý lấy trực tiếp từ `npcData.responses[sectionId].sampleQuestion`
+  // — do người viết nội dung soạn sẵn riêng cho từng nhân vật/mốc, đúng
+  // giọng văn và xưng hô của nhân vật đó. TRƯỚC ĐÂY hàm này đoán câu hỏi
+  // bằng cách dò regex trên `label` (vd "nguồn", "kỹ", "kỷ"...) rồi trả về
+  // câu hỏi hard-code sẵn nội dung về ĐÀN BẦU — nên hễ label của NPC khác
+  // (Ông Ba, Hùng...) chỉ cần trùng regex là bị gán nhầm câu hỏi về đàn
+  // bầu, dù đang phỏng vấn nhân vật khác. Đọc thẳng dữ liệu theo `s.id`
+  // giải quyết triệt để lỗi này và tự đúng với mọi NPC thêm sau này.
   const suggestions = (npcData?.notebook?.sections || []).map(s => {
-    const lbl = s.label || ''
-    if (/nguồn/i.test(lbl)) return { id: s.id, q: 'Đàn bầu có nguồn gốc từ đâu?' }
-    if (/cấu/i.test(lbl)) return { id: s.id, q: 'Đàn bầu gồm những bộ phận nào?' }
-    if (/kỹ|kĩ/i.test(lbl)) return { id: s.id, q: 'Làm sao để chơi đàn bầu?' }
-    if (/âm|tiếng/i.test(lbl)) return { id: s.id, q: 'Tiếng đàn bầu nghe như thế nào?' }
-    if (/kỷ|ký|kỉ/i.test(lbl)) return { id: s.id, q: 'Ông/bà có kỷ niệm nào liên quan đến đàn bầu không?' }
-    return { id: s.id, q: `Bạn có thể nói về ${lbl.toLowerCase()}?` }
+    const response = npcData?.responses?.[s.id]
+    const q = response?.sampleQuestion || `Bạn có thể kể về ${(s.label || '').toLowerCase()} không?`
+    return { id: s.id, q }
   })
 
   const [open, setOpen] = useState(false)

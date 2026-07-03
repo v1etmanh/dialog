@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import VillageScene from './scenes/VillageScene.jsx'
 import InterviewScene from './scenes/InterviewScene.jsx'
+import NewspaperScene from './scenes/NewspaperScene.jsx'
 import ongBaData from './data/npc_oanquan.json'
 import baNamData from './data/npc_danbau.json'
 import hungData from './data/npc_hung.json'
@@ -8,7 +9,7 @@ import hungData from './data/npc_hung.json'
 const ALL_NPCS = [ongBaData, hungData, baNamData]
 
 /* ─── Completion screen ──────────────────────────────────── */
-function CompletionScreen({ npcData, onReturn }) {
+function CompletionScreen({ npcData, onReturn, onMakeNewspaper }) {
   return (
     <div style={{
       width: '100%',
@@ -69,25 +70,46 @@ function CompletionScreen({ npcData, onReturn }) {
         }}>
           "{npcData.name} mỉm cười và gật đầu hài lòng. Cuốn sổ của bạn đã có thêm những trang đầy ý nghĩa về di sản văn hóa Việt Nam."
         </div>
-        <button
-          onClick={onReturn}
-          style={{
-            background: 'linear-gradient(135deg, var(--wood-dark), var(--wood))',
-            color: '#fdf3e3',
-            border: 'none',
-            borderRadius: 12,
-            padding: '12px 32px',
-            fontSize: '1rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(90,50,10,0.4)',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)' }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
-        >
-          ← Quay về làng
-        </button>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button
+            onClick={onMakeNewspaper}
+            style={{
+              background: 'linear-gradient(135deg, var(--gold), var(--gold-light))',
+              color: 'var(--text)',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 28px',
+              fontSize: '1rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(212,160,84,0.4)',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
+          >
+            📰 Làm Tờ Báo
+          </button>
+          <button
+            onClick={onReturn}
+            style={{
+              background: 'linear-gradient(135deg, var(--wood-dark), var(--wood))',
+              color: '#fdf3e3',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 32px',
+              fontSize: '1rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(90,50,10,0.4)',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
+          >
+            ← Quay về làng
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -95,8 +117,12 @@ function CompletionScreen({ npcData, onReturn }) {
 
 /* ─── App ─────────────────────────────────────────────────── */
 export default function App() {
-  const [scene, setScene] = useState('village')   // 'village' | 'interview' | 'complete'
+  const [scene, setScene] = useState('village')   // 'village' | 'interview' | 'complete' | 'newspaper'
   const [currentNPC, setCurrentNPC] = useState(null)
+  // Lịch sử chat của lần phỏng vấn vừa xong — giữ lại để NewspaperScene có
+  // thêm nguồn đoạn trích thật ngoài `notebook.sections` (xem mục 4 trong
+  // NEWSPAPER_FEATURE_IMPLEMENTATION.md).
+  const [interviewMessages, setInterviewMessages] = useState([])
 
   const handleSelectNPC = (npc) => {
     setCurrentNPC(npc)
@@ -108,9 +134,14 @@ export default function App() {
     setScene('village')
   }
 
-  const handleComplete = (npc) => {
+  const handleComplete = (npc, messages) => {
     setCurrentNPC(npc)
+    setInterviewMessages(messages || [])
     setScene('complete')
+  }
+
+  const handleMakeNewspaper = () => {
+    setScene('newspaper')
   }
 
   return (
@@ -140,6 +171,16 @@ export default function App() {
         <CompletionScreen
           npcData={currentNPC}
           onReturn={handleBack}
+          onMakeNewspaper={handleMakeNewspaper}
+        />
+      )}
+
+      {scene === 'newspaper' && currentNPC && (
+        <NewspaperScene
+          key={`np-${currentNPC.id}`}
+          npcData={currentNPC}
+          messages={interviewMessages}
+          onBack={() => setScene('complete')}
         />
       )}
     </div>

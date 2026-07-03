@@ -222,3 +222,100 @@
 - **Ghi chú cho tương lai**: Khi tạo `npc_*.json` mới, PHẢI điền
   `sampleQuestion` cho từng mục trong `responses` (không chỉ `keywords` +
   `text` như trước) — coi đây là trường bắt buộc trong schema NPC từ giờ.
+
+
+## [2026-07-03] - Lập kế hoạch tính năng "Tự Chọn Bố Cục Tờ Báo" (Newspaper Customizer)
+- **Hành động**: Đọc `PROJECT_LOG.md`, `App.jsx`, `useNotebook.js`,
+  `Notebook.jsx`, `DiaryCanvas.jsx`, `useConversation.js`, `npc_danbau.json`
+  để hiểu luồng dữ liệu hiện tại (chat → unlock notebook → CompletionScreen)
+  trước khi đề xuất tính năng mới theo yêu cầu người dùng: màn hình
+  "biên tập báo" cho phép chọn layout kiểu photobooth, chèn 5 ảnh có sẵn +
+  URL ảnh ngoài, cắt-dán nội dung từ câu trả lời AI đã nhận, viết tiêu đề,
+  in đậm/bôi màu — tạo ra 3 tờ báo (1 tờ/NPC). Viết file kế hoạch
+  `NEWSPAPER_FEATURE_IMPLEMENTATION.md` ở gốc dự án, CHƯA code gì.
+- **Tác động**: Chỉ thêm 1 file tài liệu mới, không đổi code hiện có.
+  Kế hoạch đề xuất bỏ cách vẽ canvas (`DiaryCanvas.jsx`) cho tính năng
+  này, chuyển sang DOM/CSS Grid + xuất ảnh bằng `html-to-image` vì cần
+  Selection API (bôi đen chọn chữ để in đậm/highlight) — canvas không hỗ
+  trợ tự nhiên việc này.
+- **Ghi chú cho tương lai**:
+  1. Trước khi code Phase 1, cần người dùng chốt 4 câu hỏi mở ở mục 11
+     của file kế hoạch (mẫu layout, mức độ rich-text, PNG/PDF, lưu server
+     hay chỉ localStorage).
+  2. `messages` (lịch sử chat thật) hiện sống trong `useConversation.js`
+     và mất khi rời `InterviewScene` — cần truyền xuống `onComplete` nếu
+     muốn dùng làm nguồn trích dẫn thứ 2 cho tờ báo (xem mục 4 kế hoạch).
+  3. Chưa cài `html-to-image` — cần `npm install html-to-image` khi bắt
+     đầu Phase 4.
+
+
+## [2026-07-03] - Code Phase 1-3 tính năng "Biên Tập Báo" (Newspaper Customizer)
+- **Thời gian**: 2026-07-03, sau khi người dùng chốt phương án ở
+  `NEWSPAPER_FEATURE_IMPLEMENTATION.md` mục 11: (1) chỉ 1 bố cục kiểu
+  "trang nhất báo giấy thật" (bỏ ý tưởng 4 template photobooth), (2) bắt
+  buộc rich-text chọn-từng-từ (Selection API) ngay từ đầu, không làm bản
+  rút gọn "áp cho cả đoạn", (3) chỉ xuất PNG (không PDF), (4) không cần
+  lưu server, localStorage là đủ.
+- **Hành động**:
+  1. Đọc `App.jsx`, `InterviewScene.jsx`, `useConversation.js`,
+     `useNotebook.js`, `Notebook.jsx`, `DiaryCanvas.jsx`, `npcAssets.js`,
+     `npc_danbau.json`, `index.css`, `package.json` để nắm luồng dữ liệu
+     & style hiện có trước khi code.
+  2. Cài `html-to-image` (`npm install`) — dùng để chụp DOM trang báo
+     thành PNG lúc xuất file.
+  3. Tạo `src/components/newspaper/EditableRichText.jsx`: khung
+     `contentEditable` chọn-từng-từ để in đậm/bôi màu qua
+     `document.execCommand` + toolbar nổi lên khi có selection. Đồng bộ
+     nội dung ra ngoài CHỈ lúc `onBlur` (không theo từng phím gõ) để
+     tránh lỗi kinh điển React+contentEditable làm mất vị trí con trỏ.
+  4. Tạo `src/components/newspaper/ImageSlot.jsx`: ô ảnh trên trang báo,
+     nhận ảnh theo mô hình "chọn ảnh trong khay trước → bấm vào ô muốn
+     đặt" (không dùng thư viện kéo-thả).
+  5. Tạo `src/data/newspaperDefaults.js`: sinh bản nháp mặc định
+     (masthead, headline, 5 slot ảnh lấy từ `getAllBackgrounds()` có sẵn,
+     3 khung chữ mồi từ 3 mục đầu `notebook.sections`) + hàm
+     `loadDraft`/`saveDraft` qua `localStorage` khoá theo `npc.id`.
+  6. Tạo `src/scenes/NewspaperScene.jsx`: màn biên tập chính — sidebar có
+     "Khay Ảnh" (5 ảnh mặc định + thêm URL ảnh ngoài) và "Ngân Hàng Đoạn
+     Trích" (gộp `notebook.sections[].content` + lời NPC thật trong
+     `messages` truyền từ `InterviewScene`); trang báo bên phải là 1 bố
+     cục cố định: masthead + headline + byline + ảnh hero 16:9 + 2 cột
+     chữ + hộp trích dẫn có ảnh minh hoạ + hàng 3 ảnh nhỏ + footer. Nút
+     "Lưu nháp" (localStorage) và "Tải PNG" (`html-to-image`).
+  7. Sửa `src/scenes/InterviewScene.jsx`: `onComplete(npcData, messages)`
+     — truyền kèm lịch sử chat thật (trước đây chỉ truyền `npcData`).
+  8. Sửa `src/App.jsx`: thêm state `interviewMessages`, scene
+     `'newspaper'`, nút "📰 Làm Tờ Báo" trong `CompletionScreen` cạnh nút
+     "Quay về làng", render `NewspaperScene` khi `scene === 'newspaper'`.
+  9. Thêm ~280 dòng CSS vào `src/index.css` cho toàn bộ giao diện
+     `.np-*` (topbar, sidebar, khay ảnh, ngân hàng đoạn trích, trang báo,
+     ô ảnh, quote box) và `.rt-*` (rich text editable + toolbar nổi).
+  10. Chạy `npm run build` — build thành công, không lỗi cú pháp/import
+      (59 modules, `dist/` sinh ra bình thường).
+- **Tác động**: Sau khi phỏng vấn xong 1 NPC, người chơi có thể bấm
+  "📰 Làm Tờ Báo" để vào màn biên tập, chọn đoạn trích + ảnh có sẵn (hoặc
+  URL ngoài) chèn vào 1 bố cục trang nhất cố định, bôi đậm/tô màu từng
+  đoạn chữ tuỳ ý, rồi tải về PNG. Áp dụng độc lập cho cả 3 NPC (lưu riêng
+  theo `npc.id` trong localStorage) — làm được "3 tờ báo" như yêu cầu.
+- **CHƯA kiểm tra bằng mắt**: mới build thành công (không lỗi biên dịch),
+  chưa chạy `npm run dev` để tự tay thử trên trình duyệt thật (chọn ảnh,
+  bôi đen chọn chữ, kéo toolbar nổi, xuất PNG). Cần người dùng tự chạy
+  `npm run dev` và test tay các luồng: (a) chọn ảnh trong khay rồi click
+  vào ô ảnh, (b) bấm vào khung chữ rồi chèn 1 đoạn trích, (c) bôi đen 1
+  cụm chữ rồi bấm B/màu trong toolbar nổi, (d) bấm "Tải PNG" xem ảnh xuất
+  ra có đúng bố cục không.
+- **Ghi chú cho tương lai**:
+  1. `document.execCommand` đã bị deprecated (dù Chromium vẫn hỗ trợ) —
+     nếu sau này cần chạy trên trình duyệt không hỗ trợ tốt, cân nhắc
+     thay bằng 1 thư viện rich-text nhẹ (vd. Lexical/Slate) thay vì tự
+     quản bằng execCommand.
+  2. `html-to-image` đôi khi lỗi với ảnh cross-origin không có CORS header
+     đúng (ảnh URL ngoài do người dùng dán vào) — nếu người dùng báo lỗi
+     "Xuất ảnh lỗi" khi có ảnh URL ngoài, khả năng cao do CORS, cần thêm
+     `crossOrigin: 'anonymous'` hoặc proxy ảnh qua server.
+  3. `newspaperLayouts.js` nhiều-template ở bản kế hoạch ban đầu KHÔNG
+     được dùng nữa — người dùng đã chọn chỉ 1 bố cục cố định, code thật
+     nằm thẳng trong JSX của `NewspaperScene.jsx`, không tách file layout
+     data riêng.
+  3. Chưa làm "Phòng Triển Lãm" xem đủ 3 tờ báo cạnh nhau (Phase 5 trong
+     kế hoạch) — có thể làm sau nếu người dùng cần.

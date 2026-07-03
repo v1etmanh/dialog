@@ -111,7 +111,9 @@ export default function InterviewScene({ npcData, onBack, onComplete }) {
   const [completionFired, setCompletionFired] = useState(false)
   if (isComplete && !completionFired) {
     setCompletionFired(true)
-    setTimeout(() => onComplete(npcData), 1200)
+    // Truyền kèm `messages` (lịch sử chat thật) để màn "Biên Tập Báo" có
+    // thêm nguồn đoạn trích ngoài `notebook.sections` — xem NewspaperScene.jsx.
+    setTimeout(() => onComplete(npcData, messages), 1200)
   }
 
   return (
